@@ -52,20 +52,39 @@ class ReportGenerator:
     
 
     def generate_category_distribution(self):
-        """Generate a bar chart showing stock distribution by category."""
-        from collections import defaultdict
-        from rich.progress import Progress, BarColumn, TimeRemainingColumn
+        """Generate a visually appealing category-wise stock distribution chart."""
 
+        # Collect stock distribution by category
         category_distribution = defaultdict(int)
         for item in self.inventory_manager.inventory:
             category_distribution[item["category"]] += item["quantity"]
 
+        if not category_distribution:
+            console.print("[bold red]No inventory items to display.[/bold red]")
+            return
+
+        # Find the category with the maximum stock for scaling
+        max_stock = max(category_distribution.values())
+
         console.print("\n[bold cyan]Category-Wise Stock Distribution:[/bold cyan]\n")
 
-        with Progress("[progress.description]{task.description}", BarColumn(), TimeRemainingColumn(), console=console) as progress:
-            for category, stock in category_distribution.items():
-                task = progress.add_task(category, total=max(category_distribution.values()))
-                progress.advance(task, stock)
+        # Create a table for better formatting
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("Category", style="cyan", justify="left")
+        table.add_column("Stock Count", justify="right")
+        table.add_column("Bar Chart", justify="left")
+
+        # Add rows to the table
+        for category, stock in category_distribution.items():
+            # Generate a scaled bar
+            bar_length = int((stock / max_stock) * 30)  # Scale bar to max 30 units
+            bar = f"[green]{'█' * bar_length}[/green]" if stock > max_stock * 0.7 else \
+                f"[yellow]{'█' * bar_length}[/yellow]" if stock > max_stock * 0.4 else \
+                f"[red]{'█' * bar_length}[/red]"
+
+            table.add_row(category, str(stock), bar)
+
+        console.print(table)
     
     def generate_inventory_value_trend(self):
         """Generate inventory value trends."""
