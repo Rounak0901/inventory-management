@@ -1,5 +1,3 @@
-# Suggested code may be subject to a license. Learn more: ~LicenseLog:965241293.
-# Suggested code may be subject to a license. Learn more: ~LicenseLog:3610285450.
 from inventory_manager import InventoryManager
 from reports import ReportGenerator 
 from user_manager import UserManager
@@ -67,8 +65,7 @@ class InventoryApp:
         return self.session_role == role
 
     def clear_screen(self):
-        self.console.clear()
-
+        print('\033c', end='')
 
     def start(self):
         self.clear_screen()
