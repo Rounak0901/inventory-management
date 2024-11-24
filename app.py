@@ -1,19 +1,19 @@
-from prompt_toolkit import prompt
-from prompt_toolkit.completion import WordCompleter
-from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.shortcuts import PromptSession
-from prompt_toolkit.styles import Style
+# Suggested code may be subject to a license. Learn more: ~LicenseLog:965241293.
+# Suggested code may be subject to a license. Learn more: ~LicenseLog:3610285450.
 from inventory_manager import InventoryManager
 from reports import ReportGenerator 
-import os
 from user_manager import UserManager
 from rich.prompt import Prompt
 from rich.console import Console
+from rich.table import Table
 import time
+import logging
+
+logging.basicConfig(filename='data/inventory_app.log', level=logging.INFO, 
+                       format='%(asctime)s - %(levelname)s - %(message)s')
 
 class InventoryApp:
     def __init__(self):
-        self.session = PromptSession()
         self.console = Console()
         self.inventory_manager = InventoryManager()
         self.report_generator = ReportGenerator(self.inventory_manager)
@@ -47,10 +47,10 @@ class InventoryApp:
     
     def _handle_low_stock_alerts(self):
         try:
-            threshold = int(input("Enter low-stock threshold: "))
+            threshold = int(Prompt.ask("Enter low-stock threshold"))
             self.report_generator.generate_low_stock_alert(threshold)
         except ValueError:
-            print("[bold red]Threshold must be an integer.[/bold red]")
+            self.console.print("[bold red]Threshold must be an integer.[/bold red]")
 
 
     def display_menu(self):
@@ -67,7 +67,7 @@ class InventoryApp:
         return self.session_role == role
 
     def clear_screen(self):
-        print('\033c', end='')
+        self.console.clear()
 
 
     def start(self):
@@ -85,7 +85,7 @@ class InventoryApp:
                 handler()
             else:
                 self.console.print("[bold red]Access denied![/bold red]")
-            input('\npress enter to continue...')
+            Prompt.ask("\nPress [bold]Enter[/bold] to continue...")
 
     def exit_app(self):
         self.console.print("[bold green]Exiting the application... Goodbye![/bold green]")

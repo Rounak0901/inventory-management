@@ -3,7 +3,7 @@ from rich.console import Console
 from datastore import DataStore
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
-
+import logging
 
 class InventoryManager:
     def __init__(self):
@@ -11,6 +11,8 @@ class InventoryManager:
         self.inventory = self.datastore.load_data()
         self.next_id = self._get_next_id()
         self.console = Console()
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
 
     def _get_next_id(self):
         """Get the next ID based on existing data."""
@@ -20,7 +22,8 @@ class InventoryManager:
 
     def view_items(self):
         if not self.inventory:
-            console.print("[bold red]No items in inventory.[/bold red]")
+            self.console.print("[bold red]No items in inventory.[/bold red]")
+            self.logger.info("Viewed inventory - No items found.")
             return
 
         table = Table(title="Inventory Items")
@@ -40,6 +43,7 @@ class InventoryManager:
             )
 
         self.console.print(table)
+        self.logger.info("Viewed inventory.")
 
     def _validate_positive_number(self, value, field_name):
         """Ensure the input is a positive number."""
@@ -70,8 +74,10 @@ class InventoryManager:
             self.next_id += 1
 
             self.console.print("[bold green]Item added successfully![/bold green]")
+            self.logger.info(f"Added item: {new_item}")
         except ValueError as e:
             self.console.print(f"[bold red]{e}[/bold red]")
+            self.logger.error(f"Error adding item: {e}")
 
     def edit_item(self):
         try:
@@ -88,11 +94,14 @@ class InventoryManager:
                     )
                     self.datastore.save_data(self.inventory)
                     self.console.print("[bold green]Item updated successfully![/bold green]")
+                    self.logger.info(f"Updated item with ID: {item_id}")
                     return
 
             self.console.print("[bold red]Item not found.[/bold red]")
+            self.logger.warning(f"Tried to edit item with ID: {item_id} - Not found.")
         except ValueError as e:
             self.console.print(f"[bold red]{e}[/bold red]")
+            self.logger.error(f"Error editing item: {e}")
     
     def delete_item(self):
         item_id = int(input("Enter the ID of the item to delete: "))
@@ -101,9 +110,11 @@ class InventoryManager:
                 self.inventory.remove(item)
                 self.datastore.save_data(self.inventory)
                 self.console.print("[bold green]Item deleted successfully![/bold green]")
+                self.logger.info(f"Deleted item with ID: {item_id}")
                 return
 
         self.console.print("[bold red]Item not found.[/bold red]")
+        self.logger.warning(f"Tried to delete item with ID: {item_id} - Not found.")
 
     def search_items(self):
         search_options = WordCompleter(
@@ -125,6 +136,7 @@ class InventoryManager:
             results = [item for item in self.inventory if min_price <= item["price"] <= max_price]
         else:
             self.console.print("[bold red]Invalid search option.[/bold red]")
+            self.logger.warning(f"Invalid search option: {search_by}")
             return
 
         if results:
@@ -145,5 +157,7 @@ class InventoryManager:
                 )
 
             self.console.print(table)
+            self.logger.info(f"Searched items by {search_by} - Found {len(results)} results.")
         else:
             self.console.print("[bold red]No items found matching the search criteria.[/bold red]")
+            self.logger.info(f"Searched items by {search_by} - No results found.")

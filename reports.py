@@ -4,32 +4,36 @@ from rich.table import Table
 from rich.panel import Panel
 from collections import defaultdict
 from rich.progress import Progress, BarColumn, TimeRemainingColumn
-
-console = Console()
+import logging
 
 class ReportGenerator:
     def __init__(self, inventory_manager):
         self.inventory_manager = inventory_manager
+        self.console = Console()
+        self.logger = logging.getLogger(__name__)
 
     def generate_summary(self):
         inventory = self.inventory_manager.inventory
         if not inventory:
-            console.print("[bold red]No items in inventory.[/bold red]")
+            self.logger.info("Inventory is empty. Nothing to summarize.")
+            self.console.print("[bold red]No items in inventory.[/bold red]")
             return
 
         total_items = sum(item["quantity"] for item in inventory)
         total_value = sum(item["quantity"] * item["price"] for item in inventory)
 
-        console.print(f"\n[bold cyan]Inventory Summary[/bold cyan]")
-        console.print(f"Total items: [bold]{total_items}[/bold]")
-        console.print(f"Total value: [bold]${total_value:.2f}[/bold]\n")
+        self.console.print(f"\n[bold cyan]Inventory Summary[/bold cyan]")
+        self.console.print(f"Total items: [bold]{total_items}[/bold]")
+        self.console.print(f"Total value: [bold]${total_value:.2f}[/bold]\n")
+        self.logger.info(f"Generated inventory summary: Total items={total_items}, Total value=${total_value:.2f}")
 
     def generate_low_stock_alert(self, threshold=10):
         """Display items with stock below the specified threshold."""
         low_stock_items = [item for item in self.inventory_manager.inventory if item["quantity"] < threshold]
 
         if not low_stock_items:
-            console.print(f"[bold green]No items below the threshold of {threshold}.[/bold green]")
+            self.logger.info(f"No items found below the low stock threshold of {threshold}.")
+            self.console.print(f"[bold green]No items below the threshold of {threshold}.[/bold green]")
             return
 
         table = Table(title=f"Low-Stock Items (Threshold: {threshold})")
@@ -48,7 +52,8 @@ class ReportGenerator:
                 f"${item['price']:.2f}"
             )
 
-        console.print(table)
+        self.console.print(table)
+        self.logger.info(f"Generated low stock alert for items below threshold {threshold}.")
     
 
     def generate_category_distribution(self):
@@ -60,13 +65,14 @@ class ReportGenerator:
             category_distribution[item["category"]] += item["quantity"]
 
         if not category_distribution:
-            console.print("[bold red]No inventory items to display.[/bold red]")
+            self.logger.info("No inventory items found for category distribution report.")
+            self.console.print("[bold red]No inventory items to display.[/bold red]")
             return
 
         # Find the category with the maximum stock for scaling
         max_stock = max(category_distribution.values())
 
-        console.print("\n[bold cyan]Category-Wise Stock Distribution:[/bold cyan]\n")
+        self.console.print("\n[bold cyan]Category-Wise Stock Distribution:[/bold cyan]\n")
 
         # Create a table for better formatting
         table = Table(show_header=True, header_style="bold magenta")
@@ -84,13 +90,14 @@ class ReportGenerator:
 
             table.add_row(category, str(stock), bar)
 
-        console.print(table)
+        self.console.print(table)
+        self.logger.info("Generated category distribution report.")
     
     def generate_inventory_value_trend(self):
         """Generate inventory value trends."""
         total_value = sum(item["quantity"] * item["price"] for item in self.inventory_manager.inventory)
 
-        console.print("\n[bold cyan]Inventory Value Trends:[/bold cyan]\n")
+        self.console.print("\n[bold cyan]Inventory Value Trends:[/bold cyan]\n")
         table = Table(title="Inventory Value Details")
         table.add_column("Total Items", justify="right")
         table.add_column("Total Value", justify="right")
@@ -100,7 +107,8 @@ class ReportGenerator:
             f"${total_value:.2f}"
         )
 
-        console.print(table)
+        self.console.print(table)
+        self.logger.info("Generated inventory value trend report.")
 
 
 
